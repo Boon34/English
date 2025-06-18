@@ -208,6 +208,22 @@
         .image-preview-container {
             margin: 10px 0;
         }
+        
+        .reset-btn {
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 0.9em;
+            transition: background-color 0.3s;
+        }
+        
+        .reset-btn:hover {
+            background-color: #f57c00;
+        }
     </style>
 </head>
 <body>
@@ -247,6 +263,7 @@
             <textarea id="english-text" placeholder="Paste your English text for this day here..."></textarea>
             <button id="save-text">Save for This Day</button>
             <button id="generate-audio">Generate All Audio Files</button>
+            <button id="reset-data" class="reset-btn">Reset All Data</button>
             <div id="status" class="status"></div>
         </div>
         
@@ -269,6 +286,7 @@
             const imagePreview = document.getElementById('image-preview');
             const saveTextBtn = document.getElementById('save-text');
             const generateAudioBtn = document.getElementById('generate-audio');
+            const resetDataBtn = document.getElementById('reset-data');
             const audioContainer = document.getElementById('audio-container');
             const translationResult = document.getElementById('translation');
             const dayButtons = document.querySelectorAll('.day-btn');
@@ -277,26 +295,43 @@
             const currentDayLabel = document.getElementById('current-day-label');
             const dayProgress = document.getElementById('day-progress');
             
+            // Data storage keys
+            const STORAGE_KEY = 'hust_english_learning_data';
+            const WEEK_KEY = 'hust_current_week';
+            const DAY_KEY = 'hust_current_day';
+            
             let textParts = Array(7).fill(''); // Store text for each day
             let imageUrls = Array(7).fill(''); // Store image URLs for each day
             let currentDay = 1;
+            let currentWeek = 1;
             let audioUrls = [];
             let daysCompleted = 0;
             
-            // Initialize
+            // Initialize - load saved data
+            loadSavedData();
             updateUIForCurrentDay();
             
             // Event listeners
             saveTextBtn.addEventListener('click', saveTextForCurrentDay);
             generateAudioBtn.addEventListener('click', generateAudioFiles);
+            resetDataBtn.addEventListener('click', resetAllData);
             
             dayButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     dayButtons.forEach(btn => btn.classList.remove('active'));
                     this.classList.add('active');
                     currentDay = parseInt(this.dataset.day);
+                    localStorage.setItem(DAY_KEY, currentDay);
                     updateUIForCurrentDay();
                 });
+            });
+            
+            // Handle week change
+            weekInput.addEventListener('change', function() {
+                currentWeek = parseInt(this.value);
+                localStorage.setItem(WEEK_KEY, currentWeek);
+                loadSavedData();
+                updateUIForCurrentDay();
             });
             
             // Preview image when URL changes
@@ -308,6 +343,50 @@
             englishText.addEventListener('mouseup', handleTextSelection);
             
             // Functions
+            function loadSavedData() {
+                // Load current week
+                const savedWeek = localStorage.getItem(WEEK_KEY);
+                if (savedWeek) {
+                    currentWeek = parseInt(savedWeek);
+                    weekInput.value = currentWeek;
+                }
+                
+                // Load current day
+                const savedDay = localStorage.getItem(DAY_KEY);
+                if (savedDay) {
+                    currentDay = parseInt(savedDay);
+                    // Update active button
+                    dayButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                        if (parseInt(btn.dataset.day) === currentDay) {
+                            btn.classList.add('active');
+                        }
+                    });
+                }
+                
+                // Load saved data for current week
+                const savedData = localStorage.getItem(`${STORAGE_KEY}_week_${currentWeek}`);
+                if (savedData) {
+                    try {
+                        const data = JSON.parse(savedData);
+                        if (data.textParts) textParts = data.textParts;
+                        if (data.imageUrls) imageUrls = data.imageUrls;
+                        if (data.audioUrls) audioUrls = data.audioUrls;
+                    } catch (e) {
+                        console.error('Failed to parse saved data', e);
+                    }
+                }
+            }
+            
+            function saveCurrentData() {
+                const data = {
+                    textParts: textParts,
+                    imageUrls: imageUrls,
+                    audioUrls: audioUrls
+                };
+                localStorage.setItem(`${STORAGE_KEY}_week_${currentWeek}`, JSON.stringify(data));
+            }
+            
             function updateUIForCurrentDay() {
                 // Update label
                 currentDayLabel.textContent = `Day ${currentDay}`;
@@ -356,9 +435,13 @@
                 textParts[currentDay - 1] = text;
                 imageUrls[currentDay - 1] = imageUrlInput.value.trim();
                 
+                // Save to localStorage
+                saveCurrentData();
+                
                 // Move to next day if not the last day
                 if (currentDay < 7) {
                     currentDay++;
+                    localStorage.setItem(DAY_KEY, currentDay);
                     
                     // Update active day button
                     dayButtons.forEach(btn => {
@@ -390,6 +473,8 @@
                 
                 // Generate audio for each part (simulated with delay)
                 simulateAudioGeneration().then(() => {
+                    // Save audio URLs to localStorage
+                    saveCurrentData();
                     updateAudioForDay(currentDay);
                     statusDiv.textContent = "All audio parts ready!";
                 });
@@ -565,6 +650,35 @@
                     } else {
                         translationResult.textContent = `Translation for "${word}" not found in dictionary.`;
                     }
+                }
+            }
+            
+            function resetAllData() {
+                if (confirm('Are you sure you want to reset ALL data for this week? This cannot be undone.')) {
+                    // Reset data arrays
+                    textParts = Array(7).fill('');
+                    imageUrls = Array(7).fill('');
+                    audioUrls = [];
+                    
+                    // Reset current day to 1
+                    currentDay = 1;
+                    localStorage.setItem(DAY_KEY, currentDay);
+                    
+                    // Update active button
+                    dayButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                        if (parseInt(btn.dataset.day) === currentDay) {
+                            btn.classList.add('active');
+                        }
+                    });
+                    
+                    // Save empty data
+                    saveCurrentData();
+                    
+                    // Update UI
+                    updateUIForCurrentDay();
+                    
+                    statusDiv.textContent = "All data for this week has been reset.";
                 }
             }
         });
