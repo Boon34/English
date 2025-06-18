@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUST English Learning</title>
+    <script src="https://cdn.jsdelivr.net/npm/recordrtc@5.6.2/RecordRTC.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            color: #333;
+        }
+
+        header {
+            background-color: #d50000;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 3em;
+        }
+
+        .slogan {
+            margin: 5px 0 0;
+            font-style: italic;
+            font-size: 1.2em;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .week-selector {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .week-selector input {
+            padding: 5px;
+            width: 60px;
+            text-align: center;
+        }
+
+        .day-selector {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .day-btn {
+            background-color: #d50000;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .day-btn:hover {
+            background-color: #b71c1c;
+        }
+
+        .day-btn.active {
+            background-color: #b71c1c;
+            font-weight: bold;
+        }
+
+        .text-input {
+            margin: 30px 0;
+        }
+
+        .text-input textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #d50000;
+            border-radius: 5px;
+            resize: vertical;
+        }
+
+        .image-input {
+            margin: 15px 0;
+        }
+
+        .image-input input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d50000;
+            border-radius: 5px;
+        }
+
+        #save-text {
+            background-color: #d50000;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: background-color 0.3s;
+        }
+
+        #save-text:hover {
+            background-color: #b71c1c;
+        }
+
+        #generate-audio {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: background-color 0.3s;
+            display: none;
+        }
+
+        #generate-audio:hover {
+            background-color: #388E3C;
+        }
+
+        .audio-section {
+            margin: 30px 0;
+        }
+
+        #audio-container {
+            margin-top: 20px;
+        }
+
+        .audio-part {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #ffebee;
+            border-radius: 5px;
+        }
+
+        .audio-part h3 {
+            margin-top: 0;
+            color: #d50000;
+        }
+
+        .translation-result {
+            margin: 30px 0;
+            padding: 15px;
+            background-color: #ffebee;
+            border-radius: 5px;
+            min-height: 50px;
+        }
+
+        .highlight {
+            background-color: #ffcdd2;
+            cursor: pointer;
+        }
+        
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .download-btn {
+            background-color: #d50000;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 0.9em;
+            transition: background-color 0.3s;
+        }
+        
+        .download-btn:hover {
+            background-color: #b71c1c;
+        }
+        
+        .status {
+            margin: 10px 0;
+            color: #d50000;
+            font-weight: bold;
+        }
+        
+        .day-progress {
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .day-image {
+            max-width: 100%;
+            margin: 15px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .image-preview-container {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>HUST</h1>
+        <p class="slogan">ONE LOVE ONE FUTURE</p>
+    </header>
+    
+    <div class="container">
+        <div class="week-selector">
+            <label for="week">Select Week:</label>
+            <input type="number" id="week" min="1" value="1">
+        </div>
+        
+        <div class="day-selector">
+            <button class="day-btn active" data-day="1">Day 1</button>
+            <button class="day-btn" data-day="2">Day 2</button>
+            <button class="day-btn" data-day="3">Day 3</button>
+            <button class="day-btn" data-day="4">Day 4</button>
+            <button class="day-btn" data-day="5">Day 5</button>
+            <button class="day-btn" data-day="6">Day 6</button>
+            <button class="day-btn" data-day="7">Day 7</button>
+        </div>
+        
+        <div class="day-progress" id="day-progress">
+            Currently working on: Day 1
+        </div>
+        
+        <div class="text-input">
+            <h2>Content for <span id="current-day-label">Day 1</span>:</h2>
+            <div class="image-input">
+                <label for="image-url">Image URL (optional):</label>
+                <input type="text" id="image-url" placeholder="Paste image URL here...">
+                <div class="image-preview-container" id="image-preview"></div>
+            </div>
+            <label for="english-text">English Text:</label>
+            <textarea id="english-text" placeholder="Paste your English text for this day here..."></textarea>
+            <button id="save-text">Save for This Day</button>
+            <button id="generate-audio">Generate All Audio Files</button>
+            <div id="status" class="status"></div>
+        </div>
+        
+        <div class="audio-section">
+            <h2>Today's Listening</h2>
+            <div id="audio-container"></div>
+        </div>
+        
+        <div class="translation-result">
+            <h3>Translation:</h3>
+            <p id="translation"></p>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const englishText = document.getElementById('english-text');
+            const imageUrlInput = document.getElementById('image-url');
+            const imagePreview = document.getElementById('image-preview');
+            const saveTextBtn = document.getElementById('save-text');
+            const generateAudioBtn = document.getElementById('generate-audio');
+            const audioContainer = document.getElementById('audio-container');
+            const translationResult = document.getElementById('translation');
+            const dayButtons = document.querySelectorAll('.day-btn');
+            const weekInput = document.getElementById('week');
+            const statusDiv = document.getElementById('status');
+            const currentDayLabel = document.getElementById('current-day-label');
+            const dayProgress = document.getElementById('day-progress');
+            
+            let textParts = Array(7).fill(''); // Store text for each day
+            let imageUrls = Array(7).fill(''); // Store image URLs for each day
+            let currentDay = 1;
+            let audioUrls = [];
+            let daysCompleted = 0;
+            
+            // Initialize
+            updateUIForCurrentDay();
+            
+            // Event listeners
+            saveTextBtn.addEventListener('click', saveTextForCurrentDay);
+            generateAudioBtn.addEventListener('click', generateAudioFiles);
+            
+            dayButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    dayButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    currentDay = parseInt(this.dataset.day);
+                    updateUIForCurrentDay();
+                });
+            });
+            
+            // Preview image when URL changes
+            imageUrlInput.addEventListener('input', function() {
+                updateImagePreview(this.value);
+            });
+            
+            // Highlight text for translation
+            englishText.addEventListener('mouseup', handleTextSelection);
+            
+            // Functions
+            function updateUIForCurrentDay() {
+                // Update label
+                currentDayLabel.textContent = `Day ${currentDay}`;
+                
+                // Load saved text and image for this day
+                englishText.value = textParts[currentDay - 1] || '';
+                imageUrlInput.value = imageUrls[currentDay - 1] || '';
+                updateImagePreview(imageUrls[currentDay - 1]);
+                
+                // Update day progress
+                daysCompleted = textParts.filter(part => part.trim() !== '').length;
+                dayProgress.textContent = `Progress: ${daysCompleted}/7 days completed`;
+                
+                // Show generate button only when all days are completed
+                generateAudioBtn.style.display = daysCompleted === 7 ? 'inline-block' : 'none';
+                
+                // Update audio display
+                updateAudioForDay(currentDay);
+            }
+            
+            function updateImagePreview(url) {
+                imagePreview.innerHTML = '';
+                if (url && url.trim() !== '') {
+                    try {
+                        const img = document.createElement('img');
+                        img.src = url;
+                        img.className = 'day-image';
+                        img.onerror = function() {
+                            imagePreview.innerHTML = '<p>Could not load image. Please check the URL.</p>';
+                        };
+                        imagePreview.appendChild(img);
+                    } catch (e) {
+                        imagePreview.innerHTML = '<p>Invalid image URL</p>';
+                    }
+                }
+            }
+            
+            function saveTextForCurrentDay() {
+                const text = englishText.value.trim();
+                if (!text) {
+                    alert('Please paste some English text first.');
+                    return;
+                }
+                
+                // Save text and image for current day
+                textParts[currentDay - 1] = text;
+                imageUrls[currentDay - 1] = imageUrlInput.value.trim();
+                
+                // Move to next day if not the last day
+                if (currentDay < 7) {
+                    currentDay++;
+                    
+                    // Update active day button
+                    dayButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                        if (parseInt(btn.dataset.day) === currentDay) {
+                            btn.classList.add('active');
+                        }
+                    });
+                }
+                
+                statusDiv.textContent = `Content saved for Day ${currentDay - 1}!`;
+                
+                // Update UI
+                updateUIForCurrentDay();
+            }
+            
+            function generateAudioFiles() {
+                // Check if all days have text
+                if (textParts.some(part => part.trim() === '')) {
+                    alert('Please provide text for all 7 days before generating audio.');
+                    return;
+                }
+                
+                statusDiv.textContent = "Generating audio files... (Please be patient)";
+                
+                // Clear previous audio URLs
+                audioUrls.forEach(url => URL.revokeObjectURL(url));
+                audioUrls = [];
+                
+                // Generate audio for each part (simulated with delay)
+                simulateAudioGeneration().then(() => {
+                    updateAudioForDay(currentDay);
+                    statusDiv.textContent = "All audio parts ready!";
+                });
+            }
+            
+            function simulateAudioGeneration() {
+                return new Promise((resolve) => {
+                    // Simulate audio generation with timeout
+                    setTimeout(() => {
+                        // Create dummy audio URLs (in real app, these would be real audio blobs)
+                        for (let i = 0; i < textParts.length; i++) {
+                            // This is just a simulation - in a real app you'd generate actual audio
+                            audioUrls.push(`data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...`);
+                        }
+                        resolve();
+                    }, 2000);
+                });
+            }
+            
+            function updateAudioForDay(day) {
+                audioContainer.innerHTML = '';
+                
+                // Determine which parts to show based on the day
+                let partsToShow = [];
+                if (day === 1) {
+                    partsToShow = [0];
+                } else if (day === 2) {
+                    partsToShow = [1];
+                } else if (day === 3) {
+                    partsToShow = [1, 2];
+                } else if (day === 4) {
+                    partsToShow = [1, 2, 3];
+                } else if (day === 5) {
+                    partsToShow = [1, 2, 3, 4];
+                } else if (day === 6) {
+                    partsToShow = [1, 2, 3, 4, 5];
+                } else if (day === 7) {
+                    partsToShow = [1, 2, 3, 4, 5, 6];
+                }
+                
+                partsToShow.forEach((partIndex) => {
+                    if (!textParts[partIndex] || textParts[partIndex].trim() === '') return;
+                    
+                    const partDiv = document.createElement('div');
+                    partDiv.className = 'audio-part';
+                    
+                    const partTitle = document.createElement('h3');
+                    partTitle.textContent = `Day ${partIndex + 1}`;
+                    
+                    // Add image if available
+                    if (imageUrls[partIndex] && imageUrls[partIndex].trim() !== '') {
+                        const img = document.createElement('img');
+                        img.src = imageUrls[partIndex];
+                        img.className = 'day-image';
+                        partDiv.appendChild(img);
+                    }
+                    
+                    const partText = document.createElement('p');
+                    partText.textContent = textParts[partIndex];
+                    
+                    // Create audio player
+                    const audioElement = document.createElement('audio');
+                    audioElement.controls = true;
+                    
+                    // In a real implementation, this would be the actual audio URL
+                    if (audioUrls[partIndex]) {
+                        audioElement.src = audioUrls[partIndex];
+                    } else {
+                        audioElement.src = '';
+                    }
+                    
+                    // Create download button
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.className = 'download-btn';
+                    downloadBtn.textContent = `Download Day ${partIndex + 1}`;
+                    downloadBtn.addEventListener('click', function() {
+                        if (audioUrls[partIndex]) {
+                            downloadAudio(partIndex);
+                        } else {
+                            alert('Audio not generated yet. Please generate audio files first.');
+                        }
+                    });
+                    
+                    // Create play button using TTS as fallback
+                    const playBtn = document.createElement('button');
+                    playBtn.className = 'download-btn';
+                    playBtn.textContent = `Play Day ${partIndex + 1} (TTS)`;
+                    playBtn.addEventListener('click', function() {
+                        speakText(textParts[partIndex]);
+                    });
+                    
+                    partDiv.appendChild(partTitle);
+                    partDiv.appendChild(partText);
+                    partDiv.appendChild(audioElement);
+                    partDiv.appendChild(downloadBtn);
+                    partDiv.appendChild(playBtn);
+                    audioContainer.appendChild(partDiv);
+                    
+                    // Add highlight functionality to the displayed text
+                    partText.addEventListener('mouseup', handleTextSelection);
+                });
+            }
+            
+            function downloadAudio(partIndex) {
+                // In a real implementation, this would download the actual audio file
+                alert('In a real implementation, this would download the audio file for Day ' + (partIndex + 1));
+                /*
+                const a = document.createElement('a');
+                a.href = audioUrls[partIndex];
+                a.download = `week${weekInput.value}_day${partIndex+1}.mp3`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                */
+            }
+            
+            function speakText(text) {
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'en-US';
+                    utterance.rate = 0.9;
+                    window.speechSynthesis.speak(utterance);
+                } else {
+                    alert('Text-to-speech is not supported in your browser.');
+                }
+            }
+            
+            function handleTextSelection() {
+                const selection = window.getSelection();
+                if (selection.toString().trim() !== '') {
+                    translateWord(selection.toString().trim());
+                }
+            }
+            
+            function translateWord(word) {
+                // Simple dictionary for demonstration
+                const dictionary = {
+                    'hello': 'xin chào',
+                    'goodbye': 'tạm biệt',
+                    'thank': 'cảm ơn',
+                    'you': 'bạn',
+                    'I': 'tôi',
+                    'we': 'chúng tôi',
+                    'they': 'họ',
+                    'he': 'anh ấy',
+                    'she': 'cô ấy',
+                    'it': 'nó',
+                    'this': 'cái này',
+                    'that': 'cái đó',
+                    'here': 'ở đây',
+                    'there': 'ở đó',
+                    'what': 'cái gì',
+                    'why': 'tại sao',
+                    'how': 'như thế nào',
+                    'when': 'khi nào',
+                    'where': 'ở đâu',
+                    'who': 'ai',
+                    'love': 'yêu',
+                    'future': 'tương lai',
+                    'learn': 'học',
+                    'english': 'tiếng Anh',
+                    'language': 'ngôn ngữ'
+                };
+                
+                const lowerWord = word.toLowerCase();
+                if (dictionary[lowerWord]) {
+                    translationResult.textContent = `${word}: ${dictionary[lowerWord]}`;
+                } else {
+                    // If not found in dictionary, try to remove common punctuation
+                    const cleanWord = lowerWord.replace(/[.,?!]/g, '');
+                    if (dictionary[cleanWord]) {
+                        translationResult.textContent = `${word}: ${dictionary[cleanWord]}`;
+                    } else {
+                        translationResult.textContent = `Translation for "${word}" not found in dictionary.`;
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
